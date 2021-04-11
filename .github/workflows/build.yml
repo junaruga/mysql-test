@@ -15,6 +15,8 @@ jobs:
       matrix:
         include:
           - {os: ubuntu-20.04, db: mariadb-server-10.3, allow-failure: true}
+          - {os: ubuntu-18.04, db: mariadb-server-10.1, allow-failure: true}
+          - {os: ubuntu-16.04, db: mariadb-server-10.0, allow-failure: true}
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
