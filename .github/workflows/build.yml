@@ -15,10 +15,40 @@ jobs:
       matrix:
         include:
           - {os: ubuntu-20.04, db: mariadb-server-10.3, allow-failure: true}
-          - {os: ubuntu-18.04, db: mariadb-server-10.1, allow-failure: true}
+          # Stucking.
+          # - {os: ubuntu-18.04, db: mariadb-server-10.1, allow-failure: true}
           - {os: ubuntu-16.04, db: mariadb-server-10.0, allow-failure: true}
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
       - run: echo 'DB=${{ matrix.db }}' >> $GITHUB_ENV
       - run: ./ci/setup.sh
+
+  mariadb:
+    name: >-
+      ruby ${{ matrix.ruby }} ${{ matrix.db }}:${{ matrix.db-image-tag }} ${{ matrix.db-client || '' }}
+    runs-on: ubuntu-20.04
+    continue-on-error: ${{ matrix.allow-failure || false }}
+    strategy:
+      matrix:
+        include:
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.5-focal}
+    env:
+      HOST_PORT: 3306
+      CONTAINER_PORT: 3306
+      IMAGE: ${{ matrix.db }}:${{ matrix.db-image-tag }}
+      CONTAINER_NAME: ${{ matrix.db }}-${{ matrix.db-image-tag }}
+    steps:
+      - uses: actions/checkout@v1
+      # Stop the installed MySQL.
+      - run: sudo service mysql stop
+      # Set up MariaDB
+      # https://mariadb.com/kb/en/installing-and-using-mariadb-via-docker/
+      # https://hub.docker.com/_/mariadb
+      # https://github.com/getong/mariadb-action
+      - run: docker run --rm -p "127.0.0.1:${HOST_PORT}:${CONTAINER_PORT}" --name "${CONTAINER_NAME}" -e MYSQL_ALLOW_EMPTY_PASSWORD=true -d "${IMAGE}" --port="${CONTAINER_PORT}"
+      - run: sleep 10
+      - run: ss -lntp
+      - run: docker ps
+      - run: docker logs "${CONTAINER_NAME}"
+      - run: mysql -h 127.0.0.1 -u root -P "${HOST_PORT}" -e 'SHOW DATABASES'
