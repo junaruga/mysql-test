@@ -32,7 +32,14 @@ jobs:
     strategy:
       matrix:
         include:
+          # https://hub.docker.com/_/mariadb
           - {ruby: 2.4, db: mariadb, db-image-tag: 10.5-focal, db-client: libmariadb-dev-compat}
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.4-focal}
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.3-focal}
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.2-bionic}
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.1-bionic, allow-failure: true}
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.0-xenial, allow-failure: true}
+      fail-fast: false
     env:
       IMAGE: ${{ matrix.db }}:${{ matrix.db-image-tag }}
       CONTAINER_NAME: ${{ matrix.db }}-${{ matrix.db-image-tag }}
@@ -41,4 +48,5 @@ jobs:
       # Stop the installed MySQL.
       - run: sudo service mysql stop
       - run: ci/setup_mariadb_container.sh
-      - run: sudo apt-get install -y '${{ matrix.db-client }}'
+      - if: matrix.db-client != null
+        run: sudo apt-get install -y '${{ matrix.db-client }}'

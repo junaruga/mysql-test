@@ -12,7 +12,6 @@ DOCKER="${DOCKER:-docker}"
 
 # Set up MariaDB
 # https://mariadb.com/kb/en/installing-and-using-mariadb-via-docker/
-# https://hub.docker.com/_/mariadb
 # https://github.com/getong/mariadb-action/blob/master/entrypoint.sh
 "${DOCKER}" run --rm -p "${HOST}:${HOST_PORT}:${CONTAINER_PORT}" \
   --name "${CONTAINER_NAME}" \
