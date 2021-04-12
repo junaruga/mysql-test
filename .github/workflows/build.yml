@@ -40,8 +40,8 @@ jobs:
           - {ruby: 2.4, db: mariadb, db-image-tag: 10.4-focal}
           - {ruby: 2.4, db: mariadb, db-image-tag: 10.3-focal}
           - {ruby: 2.4, db: mariadb, db-image-tag: 10.2-bionic}
-          - {ruby: 2.4, db: mariadb, db-image-tag: 10.1-bionic, allow-failure: true}
-          - {ruby: 2.4, db: mariadb, db-image-tag: 10.0-xenial, allow-failure: true}
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.1-bionic}
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.0-xenial}
       fail-fast: false
     steps:
       - uses: actions/checkout@v1
