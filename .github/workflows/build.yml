@@ -3,7 +3,7 @@ on: [push, pull_request]
 jobs:
   build:
     name: >-
-      ${{ matrix.os }} ${{ matrix.db }}
+      ${{ matrix.os }} ${{ matrix.db }} (OS DB package)
     # Available hosted runners.
     # https://docs.github.com/en/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners
     # ubuntu-20.04 # focal
@@ -21,12 +21,15 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
+      - run: ss -lntp
+      # Stop the installed MySQL.
+      - run: sudo service mysql stop
       - run: echo 'DB=${{ matrix.db }}' >> $GITHUB_ENV
       - run: ./ci/setup.sh
 
-  mariadb:
+  db-container:
     name: >-
-      ruby ${{ matrix.ruby }} ${{ matrix.db }}:${{ matrix.db-image-tag }} ${{ matrix.db-client || '' }}
+      ${{ matrix.db }}:${{ matrix.db-image-tag }} ${{ matrix.db-client || '' }} (DB container)
     runs-on: ubuntu-20.04
     continue-on-error: ${{ matrix.allow-failure || false }}
     strategy:
@@ -40,13 +43,13 @@ jobs:
           - {ruby: 2.4, db: mariadb, db-image-tag: 10.1-bionic, allow-failure: true}
           - {ruby: 2.4, db: mariadb, db-image-tag: 10.0-xenial, allow-failure: true}
       fail-fast: false
-    env:
-      IMAGE: ${{ matrix.db }}:${{ matrix.db-image-tag }}
-      CONTAINER_NAME: ${{ matrix.db }}-${{ matrix.db-image-tag }}
     steps:
       - uses: actions/checkout@v1
+      - run: ss -lntp
       # Stop the installed MySQL.
       - run: sudo service mysql stop
-      - run: ci/setup_mariadb_container.sh
+      - run: echo 'DB=${{ matrix.db }}' >> $GITHUB_ENV
+      - run: echo 'DB_IMAGE_TAG=${{ matrix.db-image-tag }}' >> $GITHUB_ENV
+      - run: ci/setup_db_container.sh
       - if: matrix.db-client != null
         run: sudo apt-get install -y '${{ matrix.db-client }}'
