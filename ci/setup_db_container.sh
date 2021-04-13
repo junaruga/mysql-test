@@ -30,9 +30,9 @@ set -eux
 # mysql -h 127.0.0.1 -u root -P 13306 -e status
 
 # Container command: docker/podman.
-DOCKER="${DOCKER:-docker}"
+DOCKER="$(command -v docker || command -v podman)"
 DB="${DB:-mariadb}"
-DB_IMAGE_TAG="${DB_IMAGE_TAG:-}"
+DB_IMAGE_TAG="${DB_IMAGE_TAG:-10.5-focal}"
 IMAGE="${DB}:${DB_IMAGE_TAG}"
 # The ":" is not allowed as a character of the name.
 CONTAINER_NAME="${DB}-${DB_IMAGE_TAG}"
@@ -41,10 +41,22 @@ HOST="127.0.0.1"
 HOST_PORT="${HOST_PORT:-3306}"
 CONTAINER_PORT="${HOST_PORT}"
 
-"${DOCKER}" run --rm -p "${HOST}:${HOST_PORT}:${CONTAINER_PORT}" \
+
+if "${DOCKER}" ps -f name="${CONTAINER_NAME}" | grep -q ${CONTAINER_NAME}; then
+  echo "Stopping running container..."
+  "${DOCKER}" stop "${CONTAINER_NAME}"
+fi
+
+# Set a volume -v option to put custom my.cnf and *.pem files to enable SSL.
+"${DOCKER}" run \
+  --rm \
   --name "${CONTAINER_NAME}" \
-  -e MYSQL_ALLOW_EMPTY_PASSWORD=true -d \
+  -d \
+  -p "${HOST}:${HOST_PORT}:${CONTAINER_PORT}" \
   -e MYSQL_DATABASE=test \
+  -v $(pwd)/etc/mysql/conf.d:/etc/mysql/conf.d \
+  -v $(pwd)/etc/mysql/ssl:/etc/mysql/ssl \
+  -e MYSQL_ALLOW_EMPTY_PASSWORD=true \
   "${IMAGE}" --port="${CONTAINER_PORT}"
 
 # Check the container.
@@ -66,11 +78,13 @@ done
 
 "${DOCKER}" logs "${CONTAINER_NAME}"
 # Show server status and info.
-# https://mariadb.com/kb/en/show-variables/
+# TODO: Find a better line separator instead of SELECT '==..='.
 mysql -h "${HOST}" -u root -P "${HOST_PORT}" -B -e "
 status;
 SELECT '==============';
 SHOW VARIABLES;
+SELECT '==============';
+SHOW VARIABLES LIKE '%ssl%';
 SELECT '==============';
 SHOW VARIABLES WHERE Variable_name IN ('have_ssl', 'local_infile', 'performance_schema', 'performance_schema_users_size');
 SELECT '==============';
