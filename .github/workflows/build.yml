@@ -22,9 +22,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: ss -lntp
-      # Stop the installed MySQL.
+      # Stop the installed MySQL just in case.
       - run: sudo service mysql stop
       - run: echo 'DB=${{ matrix.db }}' >> $GITHUB_ENV
+      - run: ./ci/db_client.sh
       - run: ./ci/setup.sh
 
   db-container:
@@ -36,20 +37,21 @@ jobs:
       matrix:
         include:
           # https://hub.docker.com/_/mariadb
-          - {ruby: 2.4, db: mariadb, db-image-tag: 10.5-focal, db-client: libmariadb-dev-compat}
-          - {ruby: 2.4, db: mariadb, db-image-tag: 10.4-focal}
-          - {ruby: 2.4, db: mariadb, db-image-tag: 10.3-focal}
-          - {ruby: 2.4, db: mariadb, db-image-tag: 10.2-bionic}
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.5-focal, db-client: libmariadb-dev}
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.4-focal, db-client: libmariadb-dev-compat}
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.3-focal, db-client: libmariadbclient-dev}
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.2-bionic, db-client: libmariadbd-dev}
           - {ruby: 2.4, db: mariadb, db-image-tag: 10.1-bionic}
-          - {ruby: 2.4, db: mariadb, db-image-tag: 10.0-xenial}
+          - {ruby: 2.4, db: mariadb, db-image-tag: 10.0-xenial, db-client: libmariadbd-dev}
       fail-fast: false
     steps:
       - uses: actions/checkout@v1
       - run: ss -lntp
-      # Stop the installed MySQL.
+      # Stop the installed MySQL just in case.
       - run: sudo service mysql stop
       - run: echo 'DB=${{ matrix.db }}' >> $GITHUB_ENV
       - run: echo 'DB_IMAGE_TAG=${{ matrix.db-image-tag }}' >> $GITHUB_ENV
       - run: ci/setup_db_container.sh
       - if: matrix.db-client != null
-        run: sudo apt-get install -y '${{ matrix.db-client }}'
+        run: echo 'DB_CLIENT=${{ matrix.db-client }}' >> $GITHUB_ENV
+      - run: ./ci/db_client.sh
