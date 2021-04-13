@@ -1,5 +1,7 @@
 # mysql-test
 
+[![Build](https://github.com/junaruga/mysql-test/actions/workflows/build.yml/badge.svg)](https://github.com/junaruga/mysql-test/actions/workflows/build.yml)
+
 Test MySQL / MariaDB on GitHub Actions CI.
 
 For the cases using MariaDB containers.
