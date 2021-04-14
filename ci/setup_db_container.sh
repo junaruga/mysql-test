@@ -17,7 +17,7 @@ set -eux
 # $ docker ps
 # $ docker stop mariadb-10.5-focal
 # $ docker kill mariadb-10.5-focal
-# $ docker container ls -a
+# $ docker ps -a
 # $ docker rm mariadb-10.5-focal
 #
 # To see the database server logs in the container.
@@ -30,7 +30,10 @@ set -eux
 # mysql -h 127.0.0.1 -u root -P 13306 -e status
 
 # Container command: docker/podman.
-DOCKER="$(command -v docker || command -v podman)"
+DOCKER="${DOCKER:-}"
+if [ DOCKER != "" ]; then
+  DOCKER="$(command -v docker || command -v podman)"
+fi
 DB="${DB:-mariadb}"
 DB_IMAGE_TAG="${DB_IMAGE_TAG:-10.5-focal}"
 IMAGE="${DB}:${DB_IMAGE_TAG}"
@@ -41,13 +44,17 @@ HOST="127.0.0.1"
 HOST_PORT="${HOST_PORT:-3306}"
 CONTAINER_PORT="${HOST_PORT}"
 
-
 if "${DOCKER}" ps -f name="${CONTAINER_NAME}" | grep -q ${CONTAINER_NAME}; then
   echo "Stopping running container..."
   "${DOCKER}" stop "${CONTAINER_NAME}"
 fi
+if "${DOCKER}" ps -a -f name="${CONTAINER_NAME}" | grep -q ${CONTAINER_NAME}; then
+  "${DOCKER}" rm "${CONTAINER_NAME}"
+fi
 
 # Set a volume -v option to put custom my.cnf and *.pem files to enable SSL.
+# TODO: Set multiple cnf files on /etc/mysql/conf.d. A cnf file for an feature.
+#   https://mariadb.com/kb/en/multiple-db-instances-in-multiple-cnf-files/
 "${DOCKER}" run \
   --rm \
   --name "${CONTAINER_NAME}" \
